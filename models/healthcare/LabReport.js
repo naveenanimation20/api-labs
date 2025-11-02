@@ -1,4 +1,7 @@
-// ==================== models/healthcare/LabReport.js ====================
+// models/healthcare/LabReport.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
 const LabReport = sequelize.define('LabReport', {
   id: {
     type: DataTypes.UUID,

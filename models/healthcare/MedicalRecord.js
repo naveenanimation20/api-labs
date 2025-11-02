@@ -1,4 +1,7 @@
-// ==================== models/healthcare/MedicalRecord.js ====================
+// models/healthcare/MedicalRecord.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
 const MedicalRecord = sequelize.define('MedicalRecord', {
   id: {
     type: DataTypes.UUID,

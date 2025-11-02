@@ -1,4 +1,7 @@
-// ==================== models/healthcare/Appointment.js ====================
+// models/healthcare/Appointment.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
 const Appointment = sequelize.define('Appointment', {
   id: {
     type: DataTypes.UUID,

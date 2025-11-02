@@ -1,4 +1,7 @@
 // ==================== models/bookings/Amenity.js ====================
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
 const Amenity = sequelize.define('Amenity', {
   id: {
     type: DataTypes.UUID,

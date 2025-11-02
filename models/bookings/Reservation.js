@@ -1,4 +1,7 @@
 // ==================== models/bookings/Reservation.js ====================
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
 const Reservation = sequelize.define('Reservation', {
   id: {
     type: DataTypes.UUID,

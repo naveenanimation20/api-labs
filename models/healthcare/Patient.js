@@ -1,4 +1,4 @@
-// ==================== models/healthcare/Patient.js ====================
+// models/healthcare/Patient.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/database');
 

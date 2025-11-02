@@ -1,13 +1,16 @@
 // controllers/ecommerceController.js
 const { Op } = require('sequelize');
-const Product = require('../models/Product');
-const Category = require('../models/Category');
-const Cart = require('../models/Cart');
-const CartItem = require('../models/CartItem');
-const Order = require('../models/Order');
-const OrderItem = require('../models/OrderItem');
-const Review = require('../models/Review');
-const Wishlist = require('../models/Wishlist');
+const { 
+  Product, 
+  Category, 
+  Cart, 
+  CartItem, 
+  Order, 
+  OrderItem, 
+  Review, 
+  Wishlist,
+  User
+} = require('../models');
 
 // ============= PRODUCTS CONTROLLERS =============
 

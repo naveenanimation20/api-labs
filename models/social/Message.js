@@ -1,4 +1,7 @@
 // ==================== models/social/Message.js ====================
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
 const Message = sequelize.define('Message', {
   id: {
     type: DataTypes.UUID,

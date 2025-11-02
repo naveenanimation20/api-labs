@@ -1,4 +1,7 @@
-// ==================== models/healthcare/Doctor.js ====================
+// models/healthcare/Doctor.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
 const Doctor = sequelize.define('Doctor', {
   id: {
     type: DataTypes.UUID,
@@ -8,7 +11,10 @@ const Doctor = sequelize.define('Doctor', {
   userId: {
     type: DataTypes.UUID,
     allowNull: false,
-    references: { model: 'users', key: 'id' }
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   licenseNumber: {
     type: DataTypes.STRING,
@@ -41,8 +47,14 @@ const Doctor = sequelize.define('Doctor', {
 });
 
 Doctor.associate = (models) => {
-  Doctor.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-  Doctor.hasMany(models.Appointment, { foreignKey: 'doctorId', as: 'appointments' });
+  Doctor.belongsTo(models.User, {
+    foreignKey: 'userId',
+    as: 'user'
+  });
+  Doctor.hasMany(models.Appointment, {
+    foreignKey: 'doctorId',
+    as: 'appointments'
+  });
 };
 
 module.exports = Doctor;

@@ -1,4 +1,7 @@
 // ==================== models/social/Notification.js ====================
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
 const Notification = sequelize.define('Notification', {
   id: {
     type: DataTypes.UUID,

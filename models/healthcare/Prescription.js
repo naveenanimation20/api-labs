@@ -1,4 +1,7 @@
-// ==================== models/healthcare/Prescription.js ====================
+// models/healthcare/Prescription.js
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
 const Prescription = sequelize.define('Prescription', {
   id: {
     type: DataTypes.UUID,

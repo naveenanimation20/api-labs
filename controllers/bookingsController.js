@@ -1,358 +1,385 @@
-// controllers/bankingController.js
-const { Account, Transaction, Card, Loan, Beneficiary } = require('../models');
+// controllers/bookingsController.js
+const { Op } = require('sequelize');
+const { Hotel, Room, Reservation, HotelReview, Amenity, User } = require('../models');
 
-// ============= ACCOUNTS =============
-exports.getAllAccounts = async (req, res) => {
+// ============= HOTELS =============
+exports.getAllHotels = async (req, res) => {
   try {
-    const accounts = await Account.findAll({
-      where: { userId: req.user.id }
-    });
-    res.json({ accounts });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch accounts' });
-  }
-};
-
-exports.getAccountById = async (req, res) => {
-  try {
-    const account = await Account.findOne({
-      where: { id: req.params.id, userId: req.user.id }
-    });
-    if (!account) return res.status(404).json({ error: 'Account not found' });
-    res.json({ account });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch account' });
-  }
-};
-
-exports.createAccount = async (req, res) => {
-  try {
-    const account = await Account.create({
-      ...req.body,
-      userId: req.user.id
-    });
-    res.status(201).json({ message: 'Account created', account });
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to create account' });
-  }
-};
-
-exports.updateAccount = async (req, res) => {
-  try {
-    const account = await Account.findOne({
-      where: { id: req.params.id, userId: req.user.id }
-    });
-    if (!account) return res.status(404).json({ error: 'Account not found' });
-    await account.update(req.body);
-    res.json({ message: 'Account updated', account });
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to update account' });
-  }
-};
-
-exports.deleteAccount = async (req, res) => {
-  try {
-    const account = await Account.findOne({
-      where: { id: req.params.id, userId: req.user.id }
-    });
-    if (!account) return res.status(404).json({ error: 'Account not found' });
-    await account.destroy();
-    res.json({ message: 'Account deleted' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete account' });
-  }
-};
-
-exports.getAccountBalance = async (req, res) => {
-  try {
-    const account = await Account.findOne({
-      where: { id: req.params.id, userId: req.user.id }
-    });
-    if (!account) return res.status(404).json({ error: 'Account not found' });
-    res.json({ balance: account.balance, currency: account.currency });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch balance' });
-  }
-};
-
-// ============= TRANSACTIONS =============
-exports.getAllTransactions = async (req, res) => {
-  try {
-    const { accountId, type, startDate, endDate } = req.query;
+    const { city, minPrice, maxPrice, rating } = req.query;
     const where = {};
-    if (accountId) where.accountId = accountId;
-    if (type) where.transactionType = type;
-    if (startDate && endDate) {
-      where.createdAt = {
-        [Op.between]: [new Date(startDate), new Date(endDate)]
-      };
+    
+    if (city) where.city = { [Op.iLike]: `%${city}%` };
+    if (minPrice) where.pricePerNight = { ...where.pricePerNight, [Op.gte]: parseFloat(minPrice) };
+    if (maxPrice) where.pricePerNight = { ...where.pricePerNight, [Op.lte]: parseFloat(maxPrice) };
+    if (rating) where.rating = { [Op.gte]: parseFloat(rating) };
+
+    const hotels = await Hotel.findAll({
+      where,
+      order: [['rating', 'DESC']]
+    });
+
+    res.json({ hotels });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch hotels' });
+  }
+};
+
+exports.getHotelById = async (req, res) => {
+  try {
+    const hotel = await Hotel.findByPk(req.params.id, {
+      include: [
+        { model: Room, as: 'rooms' },
+        { model: HotelReview, as: 'reviews' }
+      ]
+    });
+    if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
+    res.json({ hotel });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch hotel' });
+  }
+};
+
+exports.createHotel = async (req, res) => {
+  try {
+    const hotel = await Hotel.create(req.body);
+    res.status(201).json({ message: 'Hotel created', hotel });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to create hotel' });
+  }
+};
+
+exports.updateHotel = async (req, res) => {
+  try {
+    const hotel = await Hotel.findByPk(req.params.id);
+    if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
+    await hotel.update(req.body);
+    res.json({ message: 'Hotel updated', hotel });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to update hotel' });
+  }
+};
+
+exports.deleteHotel = async (req, res) => {
+  try {
+    const hotel = await Hotel.findByPk(req.params.id);
+    if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
+    await hotel.destroy();
+    res.json({ message: 'Hotel deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete hotel' });
+  }
+};
+
+exports.searchHotels = async (req, res) => {
+  try {
+    const { query, city, checkIn, checkOut } = req.query;
+    const where = {};
+    
+    if (query) {
+      where[Op.or] = [
+        { name: { [Op.iLike]: `%${query}%` } },
+        { description: { [Op.iLike]: `%${query}%` } }
+      ];
     }
-    const transactions = await Transaction.findAll({ where, order: [['createdAt', 'DESC']] });
-    res.json({ transactions });
+    if (city) where.city = { [Op.iLike]: `%${city}%` };
+
+    const hotels = await Hotel.findAll({ where });
+    res.json({ hotels });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch transactions' });
+    res.status(500).json({ error: 'Failed to search hotels' });
   }
 };
 
-exports.getTransactionById = async (req, res) => {
+// ============= ROOMS =============
+exports.getAllRooms = async (req, res) => {
   try {
-    const transaction = await Transaction.findByPk(req.params.id);
-    if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
-    res.json({ transaction });
+    const rooms = await Room.findAll();
+    res.json({ rooms });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch transaction' });
+    res.status(500).json({ error: 'Failed to fetch rooms' });
   }
 };
 
-exports.createTransaction = async (req, res) => {
+exports.getRoomById = async (req, res) => {
   try {
-    const transaction = await Transaction.create(req.body);
-    res.status(201).json({ message: 'Transaction created', transaction });
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to create transaction' });
-  }
-};
-
-exports.getAccountStatement = async (req, res) => {
-  try {
-    const transactions = await Transaction.findAll({
-      where: { accountId: req.params.id },
-      order: [['createdAt', 'DESC']],
-      limit: 50
+    const room = await Room.findByPk(req.params.id, {
+      include: [{ model: Hotel, as: 'hotel' }]
     });
-    res.json({ transactions });
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+    res.json({ room });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch statement' });
+    res.status(500).json({ error: 'Failed to fetch room' });
   }
 };
 
-// ============= CARDS =============
-exports.getAllCards = async (req, res) => {
+exports.getHotelRooms = async (req, res) => {
   try {
-    const cards = await Card.findAll({
-      where: { userId: req.user.id }
+    const rooms = await Room.findAll({
+      where: { hotelId: req.params.hotelId }
     });
-    res.json({ cards });
+    res.json({ rooms });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch cards' });
+    res.status(500).json({ error: 'Failed to fetch hotel rooms' });
   }
 };
 
-exports.getCardById = async (req, res) => {
+exports.createRoom = async (req, res) => {
   try {
-    const card = await Card.findOne({
-      where: { id: req.params.id, userId: req.user.id }
+    const room = await Room.create(req.body);
+    res.status(201).json({ message: 'Room created', room });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to create room' });
+  }
+};
+
+exports.updateRoom = async (req, res) => {
+  try {
+    const room = await Room.findByPk(req.params.id);
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+    await room.update(req.body);
+    res.json({ message: 'Room updated', room });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to update room' });
+  }
+};
+
+exports.deleteRoom = async (req, res) => {
+  try {
+    const room = await Room.findByPk(req.params.id);
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+    await room.destroy();
+    res.json({ message: 'Room deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete room' });
+  }
+};
+
+exports.checkRoomAvailability = async (req, res) => {
+  try {
+    const { checkIn, checkOut } = req.query;
+    const room = await Room.findByPk(req.params.id);
+    
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+
+    // Check for overlapping reservations
+    const overlapping = await Reservation.findOne({
+      where: {
+        roomId: req.params.id,
+        status: { [Op.notIn]: ['cancelled'] },
+        [Op.or]: [
+          {
+            checkInDate: { [Op.between]: [checkIn, checkOut] }
+          },
+          {
+            checkOutDate: { [Op.between]: [checkIn, checkOut] }
+          },
+          {
+            [Op.and]: [
+              { checkInDate: { [Op.lte]: checkIn } },
+              { checkOutDate: { [Op.gte]: checkOut } }
+            ]
+          }
+        ]
+      }
     });
-    if (!card) return res.status(404).json({ error: 'Card not found' });
-    res.json({ card });
+
+    res.json({ 
+      available: !overlapping,
+      room
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch card' });
+    res.status(500).json({ error: 'Failed to check availability' });
   }
 };
 
-exports.createCard = async (req, res) => {
+// ============= RESERVATIONS =============
+exports.getAllReservations = async (req, res) => {
   try {
-    const card = await Card.create({
+    const reservations = await Reservation.findAll({
+      where: { userId: req.user.id },
+      include: [
+        { model: Hotel, as: 'hotel' },
+        { model: Room, as: 'room' }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    res.json({ reservations });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch reservations' });
+  }
+};
+
+exports.getReservationById = async (req, res) => {
+  try {
+    const reservation = await Reservation.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+      include: [
+        { model: Hotel, as: 'hotel' },
+        { model: Room, as: 'room' }
+      ]
+    });
+    if (!reservation) return res.status(404).json({ error: 'Reservation not found' });
+    res.json({ reservation });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch reservation' });
+  }
+};
+
+exports.createReservation = async (req, res) => {
+  try {
+    const reservation = await Reservation.create({
       ...req.body,
       userId: req.user.id
     });
-    res.status(201).json({ message: 'Card created', card });
+
+    // Real-time notification
+    const io = req.app.get('io');
+    io.to(`user_${req.user.id}`).emit('reservation_created', reservation);
+
+    res.status(201).json({ message: 'Reservation created', reservation });
   } catch (error) {
-    res.status(400).json({ error: 'Failed to create card' });
+    res.status(400).json({ error: 'Failed to create reservation' });
   }
 };
 
-exports.updateCard = async (req, res) => {
+exports.updateReservation = async (req, res) => {
   try {
-    const card = await Card.findOne({
+    const reservation = await Reservation.findOne({
       where: { id: req.params.id, userId: req.user.id }
     });
-    if (!card) return res.status(404).json({ error: 'Card not found' });
-    await card.update(req.body);
-    res.json({ message: 'Card updated', card });
+    if (!reservation) return res.status(404).json({ error: 'Reservation not found' });
+    await reservation.update(req.body);
+    res.json({ message: 'Reservation updated', reservation });
   } catch (error) {
-    res.status(400).json({ error: 'Failed to update card' });
+    res.status(400).json({ error: 'Failed to update reservation' });
   }
 };
 
-exports.activateCard = async (req, res) => {
+exports.cancelReservation = async (req, res) => {
   try {
-    const card = await Card.findOne({
+    const reservation = await Reservation.findOne({
       where: { id: req.params.id, userId: req.user.id }
     });
-    if (!card) return res.status(404).json({ error: 'Card not found' });
-    card.status = 'active';
-    await card.save();
-    res.json({ message: 'Card activated', card });
+    if (!reservation) return res.status(404).json({ error: 'Reservation not found' });
+    
+    if (reservation.status === 'checked-out') {
+      return res.status(400).json({ error: 'Cannot cancel completed reservation' });
+    }
+
+    reservation.status = 'cancelled';
+    await reservation.save();
+    res.json({ message: 'Reservation cancelled', reservation });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to activate card' });
+    res.status(500).json({ error: 'Failed to cancel reservation' });
   }
 };
 
-exports.blockCard = async (req, res) => {
+exports.getUserReservations = async (req, res) => {
   try {
-    const card = await Card.findOne({
-      where: { id: req.params.id, userId: req.user.id }
+    const reservations = await Reservation.findAll({
+      where: { userId: req.user.id },
+      include: [
+        { model: Hotel, as: 'hotel' },
+        { model: Room, as: 'room' }
+      ],
+      order: [['createdAt', 'DESC']]
     });
-    if (!card) return res.status(404).json({ error: 'Card not found' });
-    card.status = 'blocked';
-    await card.save();
-    res.json({ message: 'Card blocked', card });
+    res.json({ reservations });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to block card' });
+    res.status(500).json({ error: 'Failed to fetch reservations' });
   }
 };
 
-exports.deleteCard = async (req, res) => {
+// ============= REVIEWS =============
+exports.getHotelReviews = async (req, res) => {
   try {
-    const card = await Card.findOne({
-      where: { id: req.params.id, userId: req.user.id }
+    const reviews = await HotelReview.findAll({
+      where: { hotelId: req.params.hotelId },
+      include: [{ model: User, as: 'user', attributes: ['id', 'name'] }],
+      order: [['createdAt', 'DESC']]
     });
-    if (!card) return res.status(404).json({ error: 'Card not found' });
-    await card.destroy();
-    res.json({ message: 'Card deleted' });
+    res.json({ reviews });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete card' });
+    res.status(500).json({ error: 'Failed to fetch reviews' });
   }
 };
 
-// ============= LOANS =============
-exports.getAllLoans = async (req, res) => {
+exports.createHotelReview = async (req, res) => {
   try {
-    const loans = await Loan.findAll({
-      where: { userId: req.user.id }
-    });
-    res.json({ loans });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch loans' });
-  }
-};
-
-exports.getLoanById = async (req, res) => {
-  try {
-    const loan = await Loan.findOne({
-      where: { id: req.params.id, userId: req.user.id }
-    });
-    if (!loan) return res.status(404).json({ error: 'Loan not found' });
-    res.json({ loan });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch loan' });
-  }
-};
-
-exports.applyForLoan = async (req, res) => {
-  try {
-    const loan = await Loan.create({
+    const review = await HotelReview.create({
       ...req.body,
-      userId: req.user.id
+      userId: req.user.id,
+      hotelId: req.params.hotelId
     });
-    res.status(201).json({ message: 'Loan application submitted', loan });
+    res.status(201).json({ message: 'Review created', review });
   } catch (error) {
-    res.status(400).json({ error: 'Failed to apply for loan' });
+    res.status(400).json({ error: 'Failed to create review' });
   }
 };
 
-exports.updateLoanStatus = async (req, res) => {
+exports.updateReview = async (req, res) => {
   try {
-    const loan = await Loan.findByPk(req.params.id);
-    if (!loan) return res.status(404).json({ error: 'Loan not found' });
-    loan.status = req.body.status;
-    await loan.save();
-    res.json({ message: 'Loan status updated', loan });
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to update loan status' });
-  }
-};
-
-exports.makeLoanPayment = async (req, res) => {
-  try {
-    const loan = await Loan.findOne({
+    const review = await HotelReview.findOne({
       where: { id: req.params.id, userId: req.user.id }
     });
-    if (!loan) return res.status(404).json({ error: 'Loan not found' });
-    // Payment logic here
-    loan.outstandingBalance -= req.body.amount;
-    await loan.save();
-    res.json({ message: 'Payment successful', loan });
+    if (!review) return res.status(404).json({ error: 'Review not found' });
+    await review.update(req.body);
+    res.json({ message: 'Review updated', review });
   } catch (error) {
-    res.status(400).json({ error: 'Failed to make payment' });
+    res.status(400).json({ error: 'Failed to update review' });
   }
 };
 
-// ============= BENEFICIARIES =============
-exports.getAllBeneficiaries = async (req, res) => {
+exports.deleteReview = async (req, res) => {
   try {
-    const beneficiaries = await Beneficiary.findAll({
-      where: { userId: req.user.id }
-    });
-    res.json({ beneficiaries });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch beneficiaries' });
-  }
-};
-
-exports.addBeneficiary = async (req, res) => {
-  try {
-    const beneficiary = await Beneficiary.create({
-      ...req.body,
-      userId: req.user.id
-    });
-    res.status(201).json({ message: 'Beneficiary added', beneficiary });
-  } catch (error) {
-    res.status(400).json({ error: 'Failed to add beneficiary' });
-  }
-};
-
-exports.updateBeneficiary = async (req, res) => {
-  try {
-    const beneficiary = await Beneficiary.findOne({
+    const review = await HotelReview.findOne({
       where: { id: req.params.id, userId: req.user.id }
     });
-    if (!beneficiary) return res.status(404).json({ error: 'Beneficiary not found' });
-    await beneficiary.update(req.body);
-    res.json({ message: 'Beneficiary updated', beneficiary });
+    if (!review) return res.status(404).json({ error: 'Review not found' });
+    await review.destroy();
+    res.json({ message: 'Review deleted' });
   } catch (error) {
-    res.status(400).json({ error: 'Failed to update beneficiary' });
+    res.status(500).json({ error: 'Failed to delete review' });
   }
 };
 
-exports.deleteBeneficiary = async (req, res) => {
+// ============= AMENITIES =============
+exports.getAllAmenities = async (req, res) => {
   try {
-    const beneficiary = await Beneficiary.findOne({
-      where: { id: req.params.id, userId: req.user.id }
-    });
-    if (!beneficiary) return res.status(404).json({ error: 'Beneficiary not found' });
-    await beneficiary.destroy();
-    res.json({ message: 'Beneficiary deleted' });
+    const amenities = await Amenity.findAll();
+    res.json({ amenities });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete beneficiary' });
+    res.status(500).json({ error: 'Failed to fetch amenities' });
   }
 };
 
-// ============= TRANSFERS =============
-exports.createTransfer = async (req, res) => {
+exports.createAmenity = async (req, res) => {
   try {
-    const { fromAccountId, toAccountId, amount, description } = req.body;
-    // Create transfer transactions
-    await Transaction.create({
-      accountId: fromAccountId,
-      transactionType: 'transfer',
-      amount,
-      description,
-      toAccountId
-    });
-    res.status(201).json({ message: 'Transfer initiated' });
+    const amenity = await Amenity.create(req.body);
+    res.status(201).json({ message: 'Amenity created', amenity });
   } catch (error) {
-    res.status(400).json({ error: 'Transfer failed' });
+    res.status(400).json({ error: 'Failed to create amenity' });
   }
 };
 
-exports.getTransferStatus = async (req, res) => {
+exports.updateAmenity = async (req, res) => {
   try {
-    const transaction = await Transaction.findByPk(req.params.id);
-    if (!transaction) return res.status(404).json({ error: 'Transfer not found' });
-    res.json({ status: transaction.status });
+    const amenity = await Amenity.findByPk(req.params.id);
+    if (!amenity) return res.status(404).json({ error: 'Amenity not found' });
+    await amenity.update(req.body);
+    res.json({ message: 'Amenity updated', amenity });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch transfer status' });
+    res.status(400).json({ error: 'Failed to update amenity' });
+  }
+};
+
+exports.deleteAmenity = async (req, res) => {
+  try {
+    const amenity = await Amenity.findByPk(req.params.id);
+    if (!amenity) return res.status(404).json({ error: 'Amenity not found' });
+    await amenity.destroy();
+    res.json({ message: 'Amenity deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete amenity' });
   }
 };

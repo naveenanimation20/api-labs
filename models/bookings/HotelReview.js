@@ -1,4 +1,7 @@
 // ==================== models/bookings/HotelReview.js ====================
+const { DataTypes } = require('sequelize');
+const sequelize = require('../../config/database');
+
 const HotelReview = sequelize.define('HotelReview', {
   id: {
     type: DataTypes.UUID,
