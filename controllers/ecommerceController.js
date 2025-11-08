@@ -604,22 +604,3 @@ exports.removeFromWishlist = async (req, res) => {
     res.status(500).json({ error: 'Failed to remove from wishlist' });
   }
 };
-
-
-module.exports = {
-  // ... existing exports
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  updateCartItem,
-  removeFromCart,
-  clearCart,
-  cancelOrder,
-  getProductReviews,
-  createReview,
-  updateReview,
-  deleteReview,
-  getWishlist,
-  addToWishlist,
-  removeFromWishlist
-};

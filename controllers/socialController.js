@@ -446,18 +446,3 @@ exports.clearAllNotifications = async (req, res) => {
 
 
 
-module.exports = {
-  // ... existing exports
-  getUserPosts,
-  getPostComments,
-  createComment,
-  updateComment,
-  deleteComment,
-  likePost,
-  unlikePost,
-  getPostLikes,
-  likeComment,
-  unlikeComment,
-  followUser,
-  unfollowUser
-};
