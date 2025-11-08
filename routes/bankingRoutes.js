@@ -1,144 +1,157 @@
-// routes/bookingsRoutes.js
+// routes/bankingRoutes.js
 const express = require('express');
 const router = express.Router();
-const { authenticate, optionalAuth } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const {
-  // Hotels
-  getAllHotels,
-  getHotelById,
-  createHotel,
-  updateHotel,
-  deleteHotel,
-  searchHotels,
-  // Rooms
-  getAllRooms,
-  getRoomById,
-  getHotelRooms,
-  createRoom,
-  updateRoom,
-  deleteRoom,
-  checkRoomAvailability,
-  // Reservations
-  getAllReservations,
-  getReservationById,
-  createReservation,
-  updateReservation,
-  cancelReservation,
-  getUserReservations,
-  // Reviews
-  getHotelReviews,
-  createHotelReview,
-  updateReview,
-  deleteReview,
-  // Amenities
-  getAllAmenities,
-  createAmenity,
-  updateAmenity,
-  deleteAmenity
-} = require('../controllers/bookingsController');
+  accountValidation,
+  transactionValidation,
+  cardValidation,
+  loanValidation,
+  beneficiaryValidation,
+  transferValidation
+} = require('../middleware/validators');
 
-// ============= HOTELS ROUTES =============
+const {
+  // Accounts
+  getAllAccounts,
+  getAccountById,
+  createAccount,
+  updateAccount,
+  deleteAccount,
+  getAccountBalance,
+  // Transactions
+  getAllTransactions,
+  getTransactionById,
+  createTransaction,
+  getAccountStatement,
+  // Cards
+  getAllCards,
+  getCardById,
+  createCard,
+  updateCard,
+  activateCard,
+  blockCard,
+  deleteCard,
+  // Loans
+  getAllLoans,
+  getLoanById,
+  applyForLoan,
+  updateLoanStatus,
+  makeLoanPayment,
+  // Beneficiaries
+  getAllBeneficiaries,
+  addBeneficiary,
+  updateBeneficiary,
+  deleteBeneficiary,
+  // Transfers
+  createTransfer,
+  getTransferStatus
+} = require('../controllers/bankingController');
 
-/**
- * @swagger
- * /api/v1/bookings/hotels:
- *   get:
- *     summary: Get all hotels
- *     tags: [Bookings - Hotels]
- *     parameters:
- *       - in: query
- *         name: city
- *         schema:
- *           type: string
- *       - in: query
- *         name: minPrice
- *         schema:
- *           type: number
- *       - in: query
- *         name: maxPrice
- *         schema:
- *           type: number
- *       - in: query
- *         name: rating
- *         schema:
- *           type: number
- *     responses:
- *       200:
- *         description: List of hotels
- */
-router.get('/hotels', optionalAuth, getAllHotels);
-router.head('/hotels', optionalAuth, getAllHotels);
-
-router.get('/hotels/search', optionalAuth, searchHotels);
-router.get('/hotels/:id', optionalAuth, getHotelById);
-router.post('/hotels', authenticate, createHotel);
-router.put('/hotels/:id', authenticate, updateHotel);
-router.patch('/hotels/:id', authenticate, updateHotel);
-router.delete('/hotels/:id', authenticate, deleteHotel);
-router.options('/hotels', (req, res) => res.sendStatus(200));
-
-// ============= ROOMS ROUTES =============
+// ============= ACCOUNTS ROUTES =============
 
 /**
  * @swagger
- * /api/v1/bookings/rooms:
+ * /api/v1/banking/accounts:
  *   get:
- *     summary: Get all rooms
- *     tags: [Bookings - Rooms]
- *     responses:
- *       200:
- *         description: List of rooms
- */
-router.get('/rooms', optionalAuth, getAllRooms);
-router.get('/rooms/:id', optionalAuth, getRoomById);
-router.get('/hotels/:hotelId/rooms', optionalAuth, getHotelRooms);
-router.post('/rooms', authenticate, createRoom);
-router.put('/rooms/:id', authenticate, updateRoom);
-router.patch('/rooms/:id', authenticate, updateRoom);
-router.delete('/rooms/:id', authenticate, deleteRoom);
-router.get('/rooms/:id/availability', optionalAuth, checkRoomAvailability);
-router.options('/rooms', (req, res) => res.sendStatus(200));
-
-// ============= RESERVATIONS ROUTES =============
-
-/**
- * @swagger
- * /api/v1/bookings/reservations:
- *   get:
- *     summary: Get all reservations
- *     tags: [Bookings - Reservations]
+ *     summary: Get all user accounts
+ *     tags: [Banking - Accounts]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of reservations
+ *         description: List of accounts
  */
-router.get('/reservations', authenticate, getAllReservations);
-router.get('/reservations/:id', authenticate, getReservationById);
-router.post('/reservations', authenticate, createReservation);
-router.put('/reservations/:id', authenticate, updateReservation);
-router.patch('/reservations/:id', authenticate, updateReservation);
-router.delete('/reservations/:id', authenticate, cancelReservation);
-router.patch('/reservations/:id/cancel', authenticate, cancelReservation);
-router.get('/users/reservations', authenticate, getUserReservations);
-router.options('/reservations', (req, res) => res.sendStatus(200));
+router.get('/accounts', authenticate, getAllAccounts);
+router.head('/accounts', authenticate, getAllAccounts);
 
-// ============= REVIEWS ROUTES =============
+router.get('/accounts/:id', authenticate, getAccountById);
+router.post('/accounts', authenticate, accountValidation, createAccount);
+router.put('/accounts/:id', authenticate, updateAccount);
+router.patch('/accounts/:id', authenticate, updateAccount);
+router.delete('/accounts/:id', authenticate, deleteAccount);
+router.get('/accounts/:id/balance', authenticate, getAccountBalance);
+router.options('/accounts', (req, res) => res.sendStatus(200));
 
-router.get('/hotels/:hotelId/reviews', optionalAuth, getHotelReviews);
-router.post('/hotels/:hotelId/reviews', authenticate, createHotelReview);
-router.put('/reviews/:id', authenticate, updateReview);
-router.patch('/reviews/:id', authenticate, updateReview);
-router.delete('/reviews/:id', authenticate, deleteReview);
-router.options('/hotels/:hotelId/reviews', (req, res) => res.sendStatus(200));
+// ============= TRANSACTIONS ROUTES =============
 
-// ============= AMENITIES ROUTES =============
+/**
+ * @swagger
+ * /api/v1/banking/transactions:
+ *   get:
+ *     summary: Get all transactions
+ *     tags: [Banking - Transactions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: accountId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [debit, credit, transfer]
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *     responses:
+ *       200:
+ *         description: List of transactions
+ */
+router.get('/transactions', authenticate, getAllTransactions);
+router.head('/transactions', authenticate, getAllTransactions);
 
-router.get('/amenities', getAllAmenities);
-router.post('/amenities', authenticate, createAmenity);
-router.put('/amenities/:id', authenticate, updateAmenity);
-router.patch('/amenities/:id', authenticate, updateAmenity);
-router.delete('/amenities/:id', authenticate, deleteAmenity);
-router.options('/amenities', (req, res) => res.sendStatus(200));
+router.get('/transactions/:id', authenticate, getTransactionById);
+router.post('/transactions', authenticate, transactionValidation, createTransaction);
+
+router.get('/accounts/:id/statement', authenticate, getAccountStatement);
+router.options('/transactions', (req, res) => res.sendStatus(200));
+
+// ============= CARDS ROUTES =============
+
+router.get('/cards', authenticate, getAllCards);
+router.get('/cards/:id', authenticate, getCardById);
+router.post('/cards', authenticate, cardValidation, createCard);
+
+router.put('/cards/:id', authenticate, updateCard);
+router.patch('/cards/:id', authenticate, updateCard);
+router.patch('/cards/:id/activate', authenticate, activateCard);
+router.patch('/cards/:id/block', authenticate, blockCard);
+router.delete('/cards/:id', authenticate, deleteCard);
+router.options('/cards', (req, res) => res.sendStatus(200));
+
+// ============= LOANS ROUTES =============
+
+router.get('/loans', authenticate, getAllLoans);
+router.get('/loans/:id', authenticate, getLoanById);
+router.post('/loans', authenticate, loanValidation, applyForLoan);
+router.put('/loans/:id/status', authenticate, updateLoanStatus);
+router.patch('/loans/:id/status', authenticate, updateLoanStatus);
+router.post('/loans/:id/payment', authenticate, makeLoanPayment);
+router.options('/loans', (req, res) => res.sendStatus(200));
+
+// ============= BENEFICIARIES ROUTES =============
+
+router.get('/beneficiaries', authenticate, getAllBeneficiaries);
+router.post('/beneficiaries', authenticate, beneficiaryValidation, addBeneficiary);
+router.put('/beneficiaries/:id', authenticate, updateBeneficiary);
+router.patch('/beneficiaries/:id', authenticate, updateBeneficiary);
+router.delete('/beneficiaries/:id', authenticate, deleteBeneficiary);
+router.options('/beneficiaries', (req, res) => res.sendStatus(200));
+
+// ============= TRANSFERS ROUTES =============
+
+router.post('/transfers', authenticate, transferValidation, createTransfer);
+router.get('/transfers/:id/status', authenticate, getTransferStatus);
+router.options('/transfers', (req, res) => res.sendStatus(200));
 
 module.exports = router;

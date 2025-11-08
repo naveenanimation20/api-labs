@@ -2,6 +2,15 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
+
+const {
+  patientValidation,
+  doctorValidation,
+  appointmentValidation,
+  prescriptionValidation
+} = require('../middleware/validators');
+
+
 const {
   // Patients
   getAllPatients,
@@ -65,7 +74,7 @@ router.get('/patients', authenticate, getAllPatients);
 router.head('/patients', authenticate, getAllPatients);
 
 router.get('/patients/:id', authenticate, getPatientById);
-router.post('/patients', authenticate, createPatient);
+router.post('/patients', authenticate, patientValidation, createPatient);
 router.put('/patients/:id', authenticate, updatePatient);
 router.patch('/patients/:id', authenticate, updatePatient);
 router.delete('/patients/:id', authenticate, deletePatient);
@@ -76,7 +85,7 @@ router.options('/patients', (req, res) => res.sendStatus(200));
 
 router.get('/doctors', authenticate, getAllDoctors);
 router.get('/doctors/:id', authenticate, getDoctorById);
-router.post('/doctors', authenticate, createDoctor);
+router.post('/doctors', authenticate, doctorValidation, createDoctor);
 router.put('/doctors/:id', authenticate, updateDoctor);
 router.patch('/doctors/:id', authenticate, updateDoctor);
 router.delete('/doctors/:id', authenticate, deleteDoctor);
@@ -115,7 +124,7 @@ router.get('/appointments', authenticate, getAllAppointments);
 router.head('/appointments', authenticate, getAllAppointments);
 
 router.get('/appointments/:id', authenticate, getAppointmentById);
-router.post('/appointments', authenticate, createAppointment);
+router.post('/appointments', authenticate, appointmentValidation, createAppointment);
 router.put('/appointments/:id', authenticate, updateAppointment);
 router.patch('/appointments/:id', authenticate, updateAppointment);
 router.delete('/appointments/:id', authenticate, cancelAppointment);
@@ -126,7 +135,7 @@ router.options('/appointments', (req, res) => res.sendStatus(200));
 
 router.get('/prescriptions', authenticate, getAllPrescriptions);
 router.get('/prescriptions/:id', authenticate, getPrescriptionById);
-router.post('/prescriptions', authenticate, createPrescription);
+router.post('/prescriptions', authenticate, prescriptionValidation, createPrescription);
 router.put('/prescriptions/:id', authenticate, updatePrescription);
 router.patch('/prescriptions/:id', authenticate, updatePrescription);
 router.delete('/prescriptions/:id', authenticate, deletePrescription);

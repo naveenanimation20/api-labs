@@ -3,6 +3,16 @@ const express = require('express');
 const router = express.Router();
 const { authenticate, optionalAuth } = require('../middleware/auth');
 const {
+  productValidation,
+  categoryValidation,
+  cartValidation,
+  updateCartItemValidation,
+  orderValidation,
+  reviewValidation,
+  wishlistValidation
+} = require('../middleware/validators');
+
+const {
   // Products
   getAllProducts,
   getProductById,
@@ -155,7 +165,7 @@ router.head('/products/:id', optionalAuth, getProductById);
  *       401:
  *         description: Unauthorized
  */
-router.post('/products', authenticate, createProduct);
+router.post('/products', authenticate, productValidation, createProduct);
 
 /**
  * @swagger
@@ -225,7 +235,7 @@ router.options('/products/:id', (req, res) => res.sendStatus(200));
 // ============= CATEGORIES ROUTES =============
 router.get('/categories', getAllCategories);
 router.get('/categories/:id', getCategoryById);
-router.post('/categories', authenticate, createCategory);
+router.post('/categories', authenticate, categoryValidation, createCategory);
 router.put('/categories/:id', authenticate, updateCategory);
 router.patch('/categories/:id', authenticate, updateCategory);
 router.delete('/categories/:id', authenticate, deleteCategory);
@@ -233,9 +243,9 @@ router.options('/categories', (req, res) => res.sendStatus(200));
 
 // ============= CART ROUTES =============
 router.get('/cart', authenticate, getCart);
-router.post('/cart', authenticate, addToCart);
-router.put('/cart/:itemId', authenticate, updateCartItem);
-router.patch('/cart/:itemId', authenticate, updateCartItem);
+router.post('/cart', authenticate, cartValidation, addToCart);
+router.put('/cart/:itemId', authenticate, updateCartItemValidation, updateCartItem);
+router.patch('/cart/:itemId', authenticate, updateCartItemValidation, updateCartItem);
 router.delete('/cart/:itemId', authenticate, removeFromCart);
 router.delete('/cart', authenticate, clearCart);
 router.options('/cart', (req, res) => res.sendStatus(200));
@@ -243,7 +253,7 @@ router.options('/cart', (req, res) => res.sendStatus(200));
 // ============= ORDERS ROUTES =============
 router.get('/orders', authenticate, getAllOrders);
 router.get('/orders/:id', authenticate, getOrderById);
-router.post('/orders', authenticate, createOrder);
+router.post('/orders', authenticate, orderValidation, createOrder);
 router.put('/orders/:id/status', authenticate, updateOrderStatus);
 router.patch('/orders/:id/cancel', authenticate, cancelOrder);
 router.delete('/orders/:id', authenticate, cancelOrder);
@@ -251,7 +261,7 @@ router.options('/orders', (req, res) => res.sendStatus(200));
 
 // ============= REVIEWS ROUTES =============
 router.get('/products/:productId/reviews', getProductReviews);
-router.post('/products/:productId/reviews', authenticate, createReview);
+router.post('/products/:productId/reviews', authenticate, reviewValidation, createReview);
 router.put('/reviews/:id', authenticate, updateReview);
 router.patch('/reviews/:id', authenticate, updateReview);
 router.delete('/reviews/:id', authenticate, deleteReview);
@@ -259,7 +269,7 @@ router.options('/products/:productId/reviews', (req, res) => res.sendStatus(200)
 
 // ============= WISHLIST ROUTES =============
 router.get('/wishlist', authenticate, getWishlist);
-router.post('/wishlist', authenticate, addToWishlist);
+router.post('/wishlist', authenticate, wishlistValidation, addToWishlist);
 router.delete('/wishlist/:productId', authenticate, removeFromWishlist);
 router.options('/wishlist', (req, res) => res.sendStatus(200));
 

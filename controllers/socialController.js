@@ -443,3 +443,21 @@ exports.clearAllNotifications = async (req, res) => {
     res.status(500).json({ error: 'Failed to clear notifications' });
   }
 };
+
+
+
+module.exports = {
+  // ... existing exports
+  getUserPosts,
+  getPostComments,
+  createComment,
+  updateComment,
+  deleteComment,
+  likePost,
+  unlikePost,
+  getPostLikes,
+  likeComment,
+  unlikeComment,
+  followUser,
+  unfollowUser
+};

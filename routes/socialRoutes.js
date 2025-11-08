@@ -2,6 +2,14 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate, optionalAuth } = require('../middleware/auth');
+
+const {
+  postValidation,
+  commentValidation,
+  messageValidation
+} = require('../middleware/validators');
+
+
 const {
   // Posts
   getAllPosts,
@@ -65,7 +73,7 @@ router.get('/posts', optionalAuth, getAllPosts);
 router.head('/posts', optionalAuth, getAllPosts);
 
 router.get('/posts/:id', optionalAuth, getPostById);
-router.post('/posts', authenticate, createPost);
+router.post('/posts', authenticate, postValidation, createPost);
 router.put('/posts/:id', authenticate, updatePost);
 router.patch('/posts/:id', authenticate, updatePost);
 router.delete('/posts/:id', authenticate, deletePost);
@@ -75,7 +83,7 @@ router.options('/posts', (req, res) => res.sendStatus(200));
 // ============= COMMENTS ROUTES =============
 
 router.get('/posts/:postId/comments', optionalAuth, getPostComments);
-router.post('/posts/:postId/comments', authenticate, createComment);
+router.post('/posts/:postId/comments', authenticate, commentValidation, createComment);
 router.put('/comments/:id', authenticate, updateComment);
 router.patch('/comments/:id', authenticate, updateComment);
 router.delete('/comments/:id', authenticate, deleteComment);
@@ -120,7 +128,7 @@ router.options('/users/:userId/follow', (req, res) => res.sendStatus(200));
 
 router.get('/messages', authenticate, getAllMessages);
 router.get('/messages/:userId', authenticate, getConversation);
-router.post('/messages', authenticate, sendMessage);
+router.post('/messages', authenticate, messageValidation, sendMessage);
 router.delete('/messages/:id', authenticate, deleteMessage);
 router.patch('/messages/:id/read', authenticate, markAsRead);
 router.options('/messages', (req, res) => res.sendStatus(200));
